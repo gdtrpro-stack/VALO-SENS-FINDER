@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valorant Sensitivity Finder & AI Calibration Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f1923;
+            color: #ece8e1;
+        }
+        .font-val {
+            font-family: 'Teko', sans-serif;
+            letter-spacing: 1px;
+        }
+        .val-red { color: #ff4655; }
+        .bg-val-red { background-color: #ff4655; }
+        .bg-val-dark { background-color: #1f2326; }
+        .bg-val-card { background-color: #111923; }
+        .border-val { border-color: rgba(255, 70, 85, 0.3); }
+        .border-val-active { border-color: #ff4655; }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f1923; }
+        ::-webkit-scrollbar-thumb { background: #ff4655; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <header class="border-b border-gray-800 bg-black/40 backdrop-blur-md sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-val-red flex items-center justify-center font-bold text-black font-val text-2xl rounded-sm">V</div>
+                <h1 class="font-val text-2xl md:text-3xl font-bold tracking-wider uppercase text-white">
+                    VALORANT SENS <span class="val-red">CALIBRATOR AI</span>
+                </h1>
+            </div>
+            <div class="text-xs text-gray-400 hidden sm:block">
+                Engine: <span class="text-emerald-400 font-mono">Local Math + Gemini Pro</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <section class="lg:col-span-5 space-y-6">
+            
+            <!-- Quick Calc Box -->
+            <div class="bg-val-card border border-gray-800 rounded-lg p-5 shadow-xl">
+                <h2 class="font-val text-2xl text-white uppercase flex items-center gap-2 mb-4">
+                    <span class="w-2 h-5 bg-val-red inline-block"></span>
+                    Kalkulator Sensitivity & eDPI
+                </h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase font-semibold mb-1">DPI Mouse</label>
+                        <input id="inputDPI" type="number" value="800" class="w-full bg-val-dark border border-gray-700 rounded p-2 text-white font-mono focus:border-red-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 uppercase font-semibold mb-1">Sens In-Game</label>
+                        <input id="inputSens" type="number" step="0.01" value="0.35" class="w-full bg-val-dark border border-gray-700 rounded p-2 text-white font-mono focus:border-red-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-val-dark/80 rounded border border-gray-800 grid grid-cols-2 gap-2 text-center">
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">eDPI</div>
+                        <div id="dispEDPI" class="font-mono text-xl font-bold val-red">280</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase">cm / 360°</div>
+                        <div id="dispCm360" class="font-mono text-xl font-bold text-cyan-400">46.6 cm</div>
+                    </div>
+                </div>
+
+                <!-- Game Conversion Table -->
+                <div class="mt-4 pt-3 border-t border-gray-800">
+                    <div class="text-xs text-gray-400 mb-2">Konversi Game Lain:</div>
+                    <div class="grid grid-cols-3 gap-2 text-xs font-mono text-center">
+                        <div class="bg-black/30 p-2 rounded">
+                            <span class="text-gray-400 block text-[10px]">CS2 / Apex</span>
+                            <span id="convCS2" class="text-white font-bold">1.11</span>
+                        </div>
+                        <div class="bg-black/30 p-2 rounded">
+                            <span class="text-gray-400 block text-[10px]">Overwatch 2</span>
+                            <span id="convOW2" class="text-white font-bold">3.71</span>
+                        </div>
+                        <div class="bg-black/30 p-2 rounded">
+                            <span class="text-gray-400 block text-[10px]">Rainbow Six</span>
+                            <span id="convR6" class="text-white font-bold">13.4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom API Key Settings -->
+            <div class="bg-val-card border border-gray-800 rounded-lg p-5 shadow-xl">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-val text-xl text-white uppercase flex items-center gap-2">
+                        <span class="w-2 h-4 bg-cyan-400 inline-block"></span>
+                        Pengaturan API Key Gemini (Opsional)
+                    </h3>
+                </div>
+                <p class="text-xs text-gray-400 mb-3">
+                    Aplikasi ini menggunakan <b>Local Diagnostic Engine</b> secara default. Jika ingin respon dari AI Gemini asli, masukkan API Key Anda di bawah ini:
+                </p>
+                <input id="inputApiKey" type="password" placeholder="Masukkan Gemini API Key (Opsional)..." class="w-full bg-val-dark border border-gray-700 rounded p-2 text-xs text-white font-mono focus:border-cyan-400 outline-none">
+            </div>
+
+        </section>
+
+        <section class="lg:col-span-7 space-y-6">
+
+            <!-- Aim Test Canvas Card -->
+            <div class="bg-val-card border border-gray-800 rounded-lg p-5 shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                    <div>
+                        <h2 class="font-val text-2xl text-white uppercase flex items-center gap-2">
+                            <span class="w-2 h-5 bg-val-red inline-block"></span>
+                            Tes Kalibrasi Aim (30 Detik)
+                        </h2>
+                        <p class="text-xs text-gray-400">Klik target (Flicking) & ikuti bola bergerak (Tracking) untuk mengukur kestabilan aim.</p>
+                    </div>
+                    <button id="btnStartTest" class="w-full sm:w-auto px-5 py-2 bg-val-red hover:bg-red-600 font-val text-xl text-white font-bold uppercase rounded tracking-wider transition-all shadow-lg shadow-red-900/30">
+                        MULAI TES AIM
+                    </button>
+                </div>
+
+                <!-- Canvas Wrapper -->
+                <div class="relative w-full aspect-video bg-black rounded border border-gray-800 overflow-hidden select-none cursor-crosshair">
+                    <canvas id="aimCanvas" class="w-full h-full block"></canvas>
+                    
+                    <!-- Overlay Start Info -->
+                    <div id="canvasOverlay" class="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-6 text-center">
+                        <div class="w-12 h-12 rounded-full bg-val-red/20 border border-val flex items-center justify-center mb-3">
+                            <svg class="w-6 h-6 text-val-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-1">Siap Mengecek Sensitivitas?</h3>
+                        <p class="text-xs text-gray-400 max-w-md mb-4">Uji konsistensi mikro, jangkauan flicking, dan akurasi tracking Anda secara instan.</p>
+                        <button id="btnOverlayStart" class="px-6 py-2 bg-val-red hover:bg-red-600 font-val text-xl text-white font-bold uppercase rounded">
+                            MULAI TES NOW
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Realtime Live Stats -->
+                <div class="grid grid-cols-4 gap-2 mt-4 text-center font-mono text-xs">
+                    <div class="bg-val-dark p-2 rounded border border-gray-800">
+                        <span class="text-gray-500 block text-[10px]">SISA WAKTU</span>
+                        <span id="statTime" class="text-lg font-bold text-white">30s</span>
+                    </div>
+                    <div class="bg-val-dark p-2 rounded border border-gray-800">
+                        <span class="text-gray-500 block text-[10px]">AKURASI</span>
+                        <span id="statAccuracy" class="text-lg font-bold text-emerald-400">0%</span>
+                    </div>
+                    <div class="bg-val-dark p-2 rounded border border-gray-800">
+                        <span class="text-gray-500 block text-[10px]">OFFSET RATA2</span>
+                        <span id="statOffset" class="text-lg font-bold text-amber-400">0 px</span>
+                    </div>
+                    <div class="bg-val-dark p-2 rounded border border-gray-800">
+                        <span class="text-gray-500 block text-[10px]">BIAS AIM</span>
+                        <span id="statBias" class="text-lg font-bold text-cyan-400">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-val-card border border-gray-800 rounded-lg p-5 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-val text-2xl text-white uppercase flex items-center gap-2">
+                        <span class="w-2 h-5 bg-cyan-400 inline-block"></span>
+                        AI & DIAGNOSTIC SENSITIVITY COACH
+                    </h2>
+                    <button id="btnGenerateAnalysis" class="px-4 py-1.5 bg-cyan-500 hover:bg-cyan-600 font-val text-lg text-black font-bold uppercase rounded transition-all">
+                        GENERATE DIAGNOSTIK
+                    </button>
+                </div>
+
+                <!-- Analysis Box Output -->
+                <div id="aiOutput" class="bg-val-dark/90 border border-gray-800 rounded-lg p-5 min-h-[180px] text-sm text-gray-300">
+                    <div class="flex flex-col items-center justify-center py-8 text-center text-gray-500">
+                        <svg class="w-10 h-10 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <p class="text-xs">Selesaikan tes aim di atas, lalu klik <b>"GENERATE DIAGNOSTIK"</b> untuk mendapatkan analisis dan rekomendasi sensitivitas presisi.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <script>
+        const state = {
+            dpi: 800,
+            sens: 0.35,
+            edpi: 280,
+            cm360: 46.6,
+            testing: false,
+            timeLeft: 30,
+            timerId: null,
+            targetsHit: 0,
+            targetsTotal: 0,
+            pixelOffsets: [],
+            overshoots: 0,
+            undershoots: 0,
+            trackingScores: [],
+            targets: [],
+            lastClick: null
+        };
+
+        // UI Element References
+        const inputDPI = document.getElementById('inputDPI');
+        const inputSens = document.getElementById('inputSens');
+        const dispEDPI = document.getElementById('dispEDPI');
+        const dispCm360 = document.getElementById('dispCm360');
+        const convCS2 = document.getElementById('convCS2');
+        const convOW2 = document.getElementById('convOW2');
+        const convR6 = document.getElementById('convR6');
+
+        const canvas = document.getElementById('aimCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasOverlay = document.getElementById('canvasOverlay');
+        const btnStartTest = document.getElementById('btnStartTest');
+        const btnOverlayStart = document.getElementById('btnOverlayStart');
+
+        const statTime = document.getElementById('statTime');
+        const statAccuracy = document.getElementById('statAccuracy');
+        const statOffset = document.getElementById('statOffset');
+        const statBias = document.getElementById('statBias');
+
+        const btnGenerateAnalysis = document.getElementById('btnGenerateAnalysis');
+        const aiOutput = document.getElementById('aiOutput');
+        const inputApiKey = document.getElementById('inputApiKey');
+
+        function updateCalculations() {
+            state.dpi = parseFloat(inputDPI.value) || 800;
+            state.sens = parseFloat(inputSens.value) || 0.35;
+            state.edpi = Math.round(state.dpi * state.sens);
+            
+            // cm/360 formula for Valorant: 31536 / (DPI * Sens)
+            const cm = (31536 / (state.dpi * state.sens)).toFixed(1);
+            state.cm360 = isNaN(cm) || !isFinite(cm) ? 0 : cm;
+
+            dispEDPI.innerText = state.edpi;
+            dispCm360.innerText = `${state.cm360} cm`;
+
+            // Conversions
+            convCS2.innerText = (state.sens * 3.18).toFixed(2);
+            convOW2.innerText = (state.sens * 10.6).toFixed(2);
+            convR6.innerText = (state.sens * 38.4).toFixed(1);
+        }
+
+        inputDPI.addEventListener('input', updateCalculations);
+        inputSens.addEventListener('input', updateCalculations);
+        updateCalculations();
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function spawnTarget() {
+            const radius = Math.random() * 8 + 14; // 14 to 22px
+            const isMoving = Math.random() > 0.4;
+            state.targets = [{
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: Math.random() * (canvas.height - 60) + 30,
+                radius: radius,
+                vx: isMoving ? (Math.random() - 0.5) * 3 : 0,
+                vy: isMoving ? (Math.random() - 0.5) * 3 : 0,
+                color: isMoving ? '#00f2fe' : '#ff4655'
+            }];
+        }
+
+        function startTest() {
+            state.testing = true;
+            state.timeLeft = 30;
+            state.targetsHit = 0;
+            state.targetsTotal = 0;
+            state.pixelOffsets = [];
+            state.overshoots = 0;
+            state.undershoots = 0;
+            
+            canvasOverlay.classList.add('hidden');
+            spawnTarget();
+            
+            if(state.timerId) clearInterval(state.timerId);
+            state.timerId = setInterval(() => {
+                state.timeLeft--;
+                statTime.innerText = `${state.timeLeft}s`;
+                if(state.timeLeft <= 0) {
+                    endTest();
+                }
+            }, 1000);
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endTest() {
+            state.testing = false;
+            clearInterval(state.timerId);
+            canvasOverlay.classList.remove('hidden');
+            statTime.innerText = "Selesai!";
+            runLocalDiagnostic(); // Auto run local math diagnostic upon completion
+        }
+
+        btnStartTest.addEventListener('click', startTest);
+        btnOverlayStart.addEventListener('click', startTest);
+
+        canvas.addEventListener('mousedown', (e) => {
+            if(!state.testing) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            state.targetsTotal++;
+
+            if(state.targets.length > 0) {
+                const target = state.targets[0];
+                const dist = Math.hypot(mouseX - target.x, mouseY - target.y);
+                const offset = Math.max(0, dist - target.radius);
+                state.pixelOffsets.push(offset);
+
+                if(dist <= target.radius) {
+                    state.targetsHit++;
+                } else {
+                    // Bias evaluation: Overshoot vs Undershoot estimation based on click vector
+                    if(dist > target.radius * 1.5) {
+                        state.overshoots++;
+                    } else {
+                        state.undershoots++;
+                    }
+                }
+            }
+
+            updateLiveStats();
+            spawnTarget();
+        });
+
+        function updateLiveStats() {
+            const acc = state.targetsTotal > 0 ? Math.round((state.targetsHit / state.targetsTotal) * 100) : 0;
+            const avgOffset = state.pixelOffsets.length > 0 ? (state.pixelOffsets.reduce((a,b)=>a+b,0)/state.pixelOffsets.length).toFixed(1) : 0;
+            
+            statAccuracy.innerText = `${acc}%`;
+            statOffset.innerText = `${avgOffset} px`;
+
+            if(state.overshoots > state.undershoots) {
+                statBias.innerText = "Overshooting";
+                statBias.className = "text-lg font-bold text-red-400";
+            } else if(state.undershoots > state.overshoots) {
+                statBias.innerText = "Undershooting";
+                statBias.className = "text-lg font-bold text-amber-400";
+            } else {
+                statBias.innerText = "Balanced";
+                statBias.className = "text-lg font-bold text-emerald-400";
+            }
+        }
+
+        function gameLoop() {
+            if(!state.testing) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw target
+            state.targets.forEach(t => {
+                t.x += t.vx;
+                t.y += t.vy;
+
+                // Bounce walls
+                if(t.x - t.radius < 0 || t.x + t.radius > canvas.width) t.vx *= -1;
+                if(t.y - t.radius < 0 || t.y + t.radius > canvas.height) t.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.radius, 0, Math.PI * 2);
+                ctx.fillStyle = t.color;
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Crosshair target center
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            });
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function runLocalDiagnostic() {
+            const acc = state.targetsTotal > 0 ? Math.round((state.targetsHit / state.targetsTotal) * 100) : 0;
+            const avgOffset = state.pixelOffsets.length > 0 ? (state.pixelOffsets.reduce((a,b)=>a+b,0)/state.pixelOffsets.length).toFixed(1) : 0;
+
+            let recSens = state.sens;
+            let diagnosis = "";
+            let action = "";
+
+            if (acc < 50 || avgOffset > 25) {
+                if (state.overshoots > state.undershoots) {
+                    recSens = (state.sens * 0.88).toFixed(2);
+                    diagnosis = "Terjadi banyak **Overshooting** (crosshair sering melewati target saat flicking). Sensitivitas Anda terlalu tinggi untuk kontrol motorik saat ini.";
+                    action = `Turunkan Sensitivitas dari **${state.sens}** ke **${recSens}** (eDPI baru ~${Math.round(recSens * state.dpi)}).`;
+                } else {
+                    recSens = (state.sens * 1.12).toFixed(2);
+                    diagnosis = "Terjadi banyak **Undershooting** (crosshair tidak sampai ke target). Sensitivitas terlalu rendah atau mousepad Anda kekurangan ruang gerak.";
+                    action = `Naikkan Sensitivitas dari **${state.sens}** ke **${recSens}** (eDPI baru ~${Math.round(recSens * state.dpi)}).`;
+                }
+            } else {
+                diagnosis = "Akurasi dan kendali mikro Anda sangat stabil. Sensitivitas saat ini sudah berada di rentang optimal (Sweet Spot).";
+                action = `Pertahankan Sensitivitas pada **${state.sens}** (${state.edpi} eDPI). Fokus pada konsistensi iklim mikro crosshair placement.`;
+            }
+
+            aiOutput.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                        <span class="text-xs text-cyan-400 font-mono font-bold">MODE: LOCAL MATH ENGINE DIAGNOSTIC</span>
+                        <span class="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded">Status: OK</span>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs font-mono my-2">
+                        <div class="bg-black/40 p-2 rounded">
+                            <span class="text-gray-500 block">AKURASI</span>
+                            <span class="text-white font-bold">${acc}%</span>
+                        </div>
+                        <div class="bg-black/40 p-2 rounded">
+                            <span class="text-gray-500 block">RATA2 OFFSET</span>
+                            <span class="text-amber-400 font-bold">${avgOffset} px</span>
+                        </div>
+                        <div class="bg-black/40 p-2 rounded">
+                            <span class="text-gray-500 block">CURRENT eDPI</span>
+                            <span class="text-val-red font-bold">${state.edpi}</span>
+                        </div>
+                        <div class="bg-black/40 p-2 rounded">
+                            <span class="text-gray-500 block">REKOMENDASI</span>
+                            <span class="text-cyan-400 font-bold">${recSens} Sens</span>
+                        </div>
+                    </div>
+                    <p class="text-xs leading-relaxed text-gray-300"><b>Diagnosa:</b> ${diagnosis}</p>
+                    <div class="p-3 bg-val-red/10 border border-val rounded text-xs text-white">
+                        <b>Rekomendasi Tindakan:</b> ${action}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function fetchGeminiAnalysis() {
+            const userKey = inputApiKey.value.trim();
+            const apiKey = userKey || "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const acc = state.targetsTotal > 0 ? Math.round((state.targetsHit / state.targetsTotal) * 100) : 0;
+            const avgOffset = state.pixelOffsets.length > 0 ? (state.pixelOffsets.reduce((a,b)=>a+b,0)/state.pixelOffsets.length).toFixed(1) : 0;
+
+            const prompt = `
+                Kamu adalah Coach Valorant Pro dan pakar Aim Sensitivity.
+                Analisis data tes aim pemain berikut:
+                - DPI: ${state.dpi}
+                - In-game Sens: ${state.sens}
+                - eDPI: ${state.edpi} (${state.cm360} cm/360)
+                - Hasil Tes: Akurasi ${acc}%, Rata-rata offset error ${avgOffset}px.
+                - Bias Flick: ${state.overshoots} Overshoots vs ${state.undershoots} Undershoots.
+
+                Berikan diagnosa singkat (maksimal 3 paragraf pendek) dalam bahasa Indonesia yang ramah & profesional:
+                1. Penilaian performa sensitivitas saat ini.
+                2. Rekomendasi sensitivitas spesifik (apakah harus dinaikkan/diturunkan dan ke angka berapa).
+                3. Tips latihan crosshair placement & aim mekanik.
+            `;
+
+            aiOutput.innerHTML = `
+                <div class="flex items-center justify-center py-6 gap-3 text-cyan-400">
+                    <svg class="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span class="text-xs font-mono">Memproses Analisis AI Gemini...</span>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if(!response.ok) throw new Error("API Connection Failed");
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if(text) {
+                    aiOutput.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between border-b border-gray-800 pb-2">
+                                <span class="text-xs text-cyan-400 font-mono font-bold">MODE: GEMINI PRO AI COACH</span>
+                                <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded">Live AI</span>
+                            </div>
+                            <div class="text-xs leading-relaxed space-y-2 text-gray-200">
+                                ${text.replace(/\n/g, '<br>')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    throw new Error("Empty AI response");
+                }
+            } catch(err) {
+                console.warn("AI API Error, falling back to Local Math Engine:", err);
+                runLocalDiagnostic();
+            }
+        }
+
+        btnGenerateAnalysis.addEventListener('click', () => {
+            if (inputApiKey.value.trim() !== "") {
+                fetchGeminiAnalysis();
+            } else {
+                runLocalDiagnostic();
+            }
+        });
+    </script>
+</body>
+</html>
